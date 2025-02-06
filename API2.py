@@ -1,59 +1,75 @@
 from flask import Flask, request, jsonify
 import requests
-from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app)
 
+NUMBERS_API_URL = "http://numbersapi.com/{}/math"
 
-# Utility Functions
-def is_prime(num):
-    if num < 2:
+def is_prime(n):
+    if n <= 1:
         return False
-    for i in range(2, int(num ** 0.5) + 1):
-        if num % i == 0:
+    for i in range(2, int(n**0.5) + 1):
+        if n % i == 0:
             return False
     return True
 
-def is_armstrong(num):
-    digits = [int(d) for d in str(num)]
-    power = len(digits)
-    return num == sum(d ** power for d in digits)
 
-def is_perfect(num):
-    return num > 0 and sum(i for i in range(1, num // 2 + 1) if num % i == 0) == num
+def digit_sum(n):
+    return sum(int(digit) for digit in str(abs(n)))
 
 
-@app.route('/api/classify-number', methods=['GET'])
+def is_perfect(n):
+    if n <= 0:
+        return False
+    divisors = [i for i in range(1, n) if n % i == 0]
+    return sum(divisors) == n
+
+
+def is_armstrong(n):
+    num_str = str(abs(n))
+    return n == sum(int(digit) ** len(num_str) for digit in num_str)
+
+
+def get_fun_fact(number):
+    try:
+        response = requests.get(NUMBERS_API_URL.format(number))
+        return response.text if response.status_code == 200 else "No fact available"
+    except requests.RequestException:
+        return "No fact available"
+
+
+@app.route("/api/classify-number", methods=["GET"])
 def classify_number():
     number_param = request.args.get("number")
 
-    if not number_param or not number_param.isdigit():
-        return jsonify({"number": number_param, "error": True}), 400
-
-    number = int(number_param)
-    properties = []
-
-    if is_armstrong(number):
-        properties.append("armstrong")
-    properties.append("odd" if number % 2 != 0 else "even")
+    if number_param is None or number_param.strip() == "":
+        return jsonify({"error": True, "number": ""}), 400
 
     try:
-        fun_fact = requests.get(NUMBERS_API_URL.format(number)).text
-    except requests.RequestException:
-        fun_fact = "No fun fact available."
+        number = int(number_param)
+    except ValueError:
+        return jsonify({"error": True, "number": number_param}), 400
 
-    response = {
+    response_data = {
+        "error": False,
         "number": number,
         "is_prime": is_prime(number),
         "is_perfect": is_perfect(number),
-        "properties": properties,
-        "digit_sum": sum(int(d) for d in str(number)),
-        "fun_fact": fun_fact
+        "digit_sum": digit_sum(number),
+        "properties": [],
+        "fun_fact": get_fun_fact(number)
     }
 
-    return jsonify(response), 200
+    if number % 2 == 0:
+        response_data["properties"].append("even")
+    else:
+        response_data["properties"].append("odd")
+
+    if is_armstrong(number):
+        response_data["properties"].append("armstrong")
+
+    return jsonify(response_data), 200
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True)
