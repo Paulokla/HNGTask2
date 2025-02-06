@@ -31,19 +31,9 @@ def get_fun_fact(n):
         return f"{n} is an Armstrong number because {' + '.join(f'{d}^{len(str(n))}' for d in str(n))} = {n}"
     return f"{n} is a fascinating number with unique properties."
 
-@app.route('/api/classify-number', methods=['GET'])
-def classify_number():
-    number = request.args.get('number')
-    
-    # Validate input
-    if not number or not number.lstrip('-').isdigit():
-        return jsonify({
-            "number": number if number else "null",
-            "error": True
-        }), 400
-    
-    number = int(number)
-    
+
+@app.route('/api/classify-number/<int:number>', methods=['GET'])
+def classify_number(number):
     properties = []
     if is_armstrong(number):
         properties.append("armstrong")
@@ -62,6 +52,14 @@ def classify_number():
     }
     
     return jsonify(response), 200
+
+@app.errorhandler(404)
+def invalid_number(error):
+    return jsonify({
+        "number": "invalid",
+        "error": True
+    }), 400
+
 
 if __name__ == '__main__':
     app.run(debug=True)
