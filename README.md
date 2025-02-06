@@ -29,7 +29,7 @@ Example Response (400 Bad Request)
 
 Deployment
 The API is deployed on Render and can be accessed at:
-<your-deployed-url>
+(https://hngtask2-t9lr.onrender.com/api/classify-number/371)
 
 Local Setup
 Clone the repository:
@@ -48,4 +48,4 @@ pip install flask flask-cors
 Run the application:
 
 python API2.py
-Access the API at http://127.0.0.1:5000/api/classify-number?number=<number>.
+Access the API at http://127.0.0.1:5000/api/classify-number/371
